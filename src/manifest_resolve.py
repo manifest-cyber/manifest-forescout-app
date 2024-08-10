@@ -33,8 +33,10 @@ from utils import check_consent
 
 
 manifest_to_ct_props_map = {
-  "product": "connect_manifest_assetid",
-  "entity_id": "connect_manifest_sbomid",
+  "assetId": "connect_manifest_assetid",
+  "sbomId": "connect_manifest_sbomid",
+  "relationship": "connect_manifest_sbom_relationship",
+  "coordinates": "connect_manifest_coordinates",
 }
 
 response = {}
@@ -53,3 +55,61 @@ if not check_consent(params):
   response['succeeded'] = False
   response['result_msg'] = 'Consent not provided.'
   logging.info('Consent to Manifest terms & agreements not provided.')
+
+# We know this likely won't work yet, the "firmware" requirement is a placeholder
+# We need the "Cloud Data Exchange Firmware", "Cloud Data Exchange Model", and "Cloud Data Exchange Vendor" from FS Cloud Data Exchange module - but we don't yet know what keys to look for.
+if "firmware" in params:
+  firmware = params.get('firmware').lower()
+  model = params.get('model').lower()
+  vendor = params.get('vendor').lower()
+
+  # Assemble our query string
+  assets_list_query_string = urllib.parse.quote(
+      '?limit=10&filters=[{ "field": "assetName", "value": "' +  model + '@' + firmware + '" }, { "field": "assetActive", "value": "true" }]',
+      safe='?&='
+  )
+
+  try:
+      asset_list_check = perform_request(manifest_base_url + '/v1/assets' + assets_list_query_string, headers, ssl_context)
+      logging.debug('Asset list returned successfully (still need to check result accuracy).')
+  except Exception as e:
+      # Ran into an error (likely expired token, etc) while attempting to fetch assets.
+      # Note to user.
+      response['succeeded'] = False
+      response_message = f'Manifest: Unexpected error while attempting to fetch assets! Error: {e}'
+      response['result_msg'] = response_message
+      logging.debug(response_message)
+  else:
+      if asset_list_check['success'] and asset_list_check['queryInfo']['totalReturn'] == 1:
+          package_url_no_version = 'pkg:cpe/' + vendor + '/' + model
+          if asset_list_check['data'][0]['packageUrlNoVersion'] != package_url_no_version:
+            # We got a single result, but the packageUrlNoVersion doesn't match what we expected
+            # For now, we consider this an error. Note to user.
+            response['succeeded'] = False
+            response_message = f'Manifest: Properties retrieved for entity {vendor}/{model}@{firmware}, but got a potentially mismatched response with: {asset_list_check["data"][0]}'
+            response['result_msg'] = response_message
+            logging.debug(response_message)
+          else:
+            logging.debug('Received single asset from Manifest, continuing to assign data to CT properties')
+            return_values = asset_list_check["data"][0]
+            for key, value in return_values.items():
+              if key in manifest_to_ct_props_map:
+                properties[manifest_to_ct_props_map[key]] = value
+
+            # Add properties and mark as succeeded
+            response["properties"] = properties
+            response['succeeded'] = True
+            logging.debug(f'Manifest: Properties retrieved for entity {vendor}/{model}@{firmware}, got JSON response with: {asset_list_check["data"][0]["packageUrlNoVersion"]}')
+      else:
+        # We got either zero or multiple results, which isn't expected.
+        # For now, we consider this an error. Note to user.
+        response['succeeded'] = False
+        response_message = f'Manifest: Expected 1 asset to be returned, but got {asset_list_check["queryInfo"]["totalReturn"]}.'
+        response['result_msg'] = response_message
+        logging.debug(response_message)
+
+else:
+  response['succeeded'] = False
+  response_message = f'Manifest: Missing required parameter information. Make sure firmware, vendor, & model are provided from the Cloud Data Exchange module.'
+  response['result_msg'] = response_message
+  logging.debug(response_message)
