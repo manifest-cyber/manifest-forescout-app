@@ -70,7 +70,7 @@ if args.url:
 params['connect_manifest_consent_agreements'] = bool(args.agree)
 
 # Include optional asset fetch
-params['connect_manifest_includeAssetListCheck'] = bool(args.includeassetfetch)
+params['connect_manifest_includeassetlistcheck'] = bool(args.includeassetfetch)
 
 # Start our local test
 logging.info('Starting local test of `manifest_test.py`...')

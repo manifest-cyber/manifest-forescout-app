@@ -85,10 +85,11 @@ def test_manifest(params):
         response['result_msg'] = str(e)
         return response
     
-    # Optional asset list check
+    # Asset list Check
     # Attempt to fetch a single asset from the target organization
     # Make sure the organization has uploaded the included test SBOM
-    if params['connect_manifest_includeAssetListCheck']:
+    params['connect_manifest_includeassetlistcheck'] = True
+    if params['connect_manifest_includeassetlistcheck']:
       firmware = '7.20.1'
       model = 'm2025-le_firmware'
       vendor = 'axis'
