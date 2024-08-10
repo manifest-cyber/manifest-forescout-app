@@ -1,0 +1,14 @@
+{
+  "name": "manifest-forescout-app",
+  "version": "0.1.0",
+  "description": "",
+  "main": "",
+  "scripts": {
+    "package": "zip -r ./src ./dist",
+    "package-win": "cd ./src && tar -a -c -f ../manifest_forescout.zip .",
+    "test": "echo \"Use python to run a test with desired options - e.g. 'python src/manifest_test_local.py\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
