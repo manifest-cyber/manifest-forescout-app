@@ -9,4 +9,3 @@ from manifest_test_base import test_manifest
 response = test_manifest(params)
 
 logging.info('Test complete. Results:')
-print(response);

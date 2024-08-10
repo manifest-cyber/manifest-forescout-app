@@ -1,6 +1,7 @@
 import argparse
 import logging
-import os
+
+# Cannot use `os` module in Forescout. Use `argparse` to pass in the API token.
 
 # Setup argument parsing
 parser = argparse.ArgumentParser(description="This script tests your connection to the Manifest API")
@@ -11,7 +12,6 @@ parser.add_argument(
   '--token',
   type=str,
   help="REQUIRED: Specify a Manifest API token to use when authenticating. You can provide via this argument or as an env variable, e.g. `export MANIFEST_API_TOKEN=myToken`",
-  default=os.getenv('MANIFEST_API_TOKEN')
 )
 
 # Alternate URL: Optional
