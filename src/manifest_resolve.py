@@ -114,8 +114,6 @@ if all(key in params and params[key] for key in required_params):
   else:
       if asset_list_check['success'] and asset_list_check['queryInfo']['totalReturn'] == 1:
           package_url_no_version = 'pkg:cpe/' + vendor + '/' + model
-          if asset_list_check['data'][0]['packageUrlNoVersion'] == package_url_no_version:
-            logging.debug('Received single asset from Manifest, and purlNoVersion matches.')
           # if asset_list_check['data'][0]['packageUrlNoVersion'] != package_url_no_version:
           #   # We got a single result, but the packageUrlNoVersion doesn't match what we expected
           #   # For now, we consider this an error. Note to user.
@@ -124,7 +122,7 @@ if all(key in params and params[key] for key in required_params):
           #   response['result_msg'] = response_message
           #   logging.debug(response_message)
           # else:
-          logging.debug(f'Received single asset from Manifest, continuing to assign data to CT properties')
+          logging.debug('Received single asset from Manifest, continuing to assign data to CT properties')
           return_values = asset_list_check["data"][0]
           for key, value in return_values.items():
             if key in manifest_to_ct_props_map:
