@@ -113,24 +113,27 @@ if all(key in params and params[key] for key in required_params):
   else:
       if asset_list_check['success'] and asset_list_check['queryInfo']['totalReturn'] == 1:
           package_url_no_version = 'pkg:cpe/' + vendor + '/' + model
-          if asset_list_check['data'][0]['packageUrlNoVersion'] != package_url_no_version:
-            # We got a single result, but the packageUrlNoVersion doesn't match what we expected
-            # For now, we consider this an error. Note to user.
-            response['succeeded'] = False
-            response_message = f'Manifest: Properties retrieved for entity {vendor}/{model}@{firmware}, but got a potentially mismatched response with: {asset_list_check["data"][0]}'
-            response['result_msg'] = response_message
-            logging.debug(response_message)
-          else:
-            logging.debug('Received single asset from Manifest, continuing to assign data to CT properties')
-            return_values = asset_list_check["data"][0]
-            for key, value in return_values.items():
-              if key in manifest_to_ct_props_map:
-                properties[manifest_to_ct_props_map[key]] = value
+          # if asset_list_check['data'][0]['packageUrlNoVersion'] != package_url_no_version:
+          #   # We got a single result, but the packageUrlNoVersion doesn't match what we expected
+          #   # For now, we consider this an error. Note to user.
+          #   response['succeeded'] = False
+          #   response_message = f'Manifest: Properties retrieved for entity {vendor}/{model}@{firmware}, but got a potentially mismatched response with: {asset_list_check["data"][0]}'
+          #   response['result_msg'] = response_message
+          #   logging.debug(response_message)
+          # else:
+          logging.debug('Received single asset from Manifest, continuing to assign data to CT properties')
+          return_values = asset_list_check["data"][0]
+          for key, value in return_values.items():
+            if key in manifest_to_ct_props_map:
+              properties[manifest_to_ct_props_map[key]] = value
 
-            # Add properties and mark as succeeded
-            response["properties"] = properties
-            response['succeeded'] = True
-            logging.debug(f'Manifest: Properties retrieved for entity {vendor}/{model}@{firmware}, got JSON response with: {asset_list_check["data"][0]["packageUrlNoVersion"]}')
+          # Add properties and mark as succeeded
+          response["properties"] = properties
+          response['succeeded'] = True
+
+          keys_list = ', '.join(properties.keys())
+          logging.debug(f'Setting properties for entity {vendor}/{model}@{firmware} with: {keys_list}')
+          # logging.debug(f'Manifest: Properties retrieved for entity {vendor}/{model}@{firmware}, got JSON response with: {asset_list_check["data"][0]["packageUrlNoVersion"]}')
       else:
         # We got either zero or multiple results, which isn't expected.
         # For now, we consider this an error. Note to user.
