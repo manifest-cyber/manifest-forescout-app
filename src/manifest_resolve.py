@@ -58,10 +58,11 @@ if not check_consent(params):
 
 # We know this likely won't work yet, the "firmware" requirement is a placeholder
 # We need the "Cloud Data Exchange Firmware", "Cloud Data Exchange Model", and "Cloud Data Exchange Vendor" from FS Cloud Data Exchange module - but we don't yet know what keys to look for.
-if "firmware" in params:
-  firmware = params.get('firmware').lower()
-  model = params.get('model').lower()
-  vendor = params.get('vendor').lower()
+required_params = ["rem_firmware", "rem_model", "rem_vendor"]
+if all(key in params and params[key] for key in required_params):
+  firmware = params.get('rem_firmware').lower()
+  model = params.get('rem_model').lower()
+  vendor = params.get('rem_vendor').lower()
 
   # Assemble our query string
   assets_list_query_string = urllib.parse.quote(
@@ -110,6 +111,6 @@ if "firmware" in params:
 
 else:
   response['succeeded'] = False
-  response_message = f'Manifest: Missing required parameter information. Make sure firmware, vendor, & model are provided from the Cloud Data Exchange module.'
+  response_message = f'Manifest: Missing required parameter information. Make sure rem_firmware, rem_vendor, & rem_model are provided from the Cloud Data Exchange module.'
   response['result_msg'] = response_message
   logging.debug(response_message)
