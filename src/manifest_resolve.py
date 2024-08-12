@@ -141,6 +141,8 @@ if all(key in params and params[key] for key in required_params):
 
 else:
   response['succeeded'] = False
-  response_message = f'Manifest: Missing required parameter information. Make sure rem_firmware, rem_vendor, & rem_model are provided from the Cloud Data Exchange module.'
+  # Short-term: Make sure the keys we need are provided from the Cloud Data Exchange module.
+  keys_list = ', '.join(params.keys())
+  response_message = f'Manifest: Missing required parameter information. Make sure rem_firmware, rem_vendor, & rem_model are provided from the Cloud Data Exchange module. Params provided: {keys_list}'
   response['result_msg'] = response_message
   logging.debug(response_message)
