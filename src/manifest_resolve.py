@@ -124,7 +124,7 @@ if all(key in params and params[key] for key in required_params):
           #   response['result_msg'] = response_message
           #   logging.debug(response_message)
           # else:
-          logging.debug(f'Received single asset from Manifest, continuing to assign data to CT properties: {asset_list_check['data'][0]['packageUrlNoVersion']}')
+          logging.debug(f'Received single asset from Manifest, continuing to assign data to CT properties')
           return_values = asset_list_check["data"][0]
           for key, value in return_values.items():
             if key in manifest_to_ct_props_map:
