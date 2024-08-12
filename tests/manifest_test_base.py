@@ -35,6 +35,13 @@ def perform_request(url, headers, ssl_context, method='GET'):
     except urllib.error.URLError as e:
         raise Exception(f"URL Error: {e.reason}")
 
+manifest_to_ct_props_map = {
+  "assetId": "connect_manifest_assetid",
+  "sbomId": "connect_manifest_sbomid",
+  "relationship": "connect_manifest_sbom_relationship",
+  "coordinates": "connect_manifest_coordinates",
+}
+
 def test_manifest(params):
     logging.info('Beginning Manifest Test...')
 
@@ -102,6 +109,13 @@ def test_manifest(params):
                 response['result_msg'] = f'Expected asset name to be {package_url_no_version}, but got {asset_list_check["data"][0]["packageUrlNoVersion"]}'
                 logging.debug('Test connection failed to Manifest (Asset List Fetch).')
               else:
+                properties = {}
+                return_values = asset_list_check["data"][0]
+                for key, value in return_values.items():
+                  if key in manifest_to_ct_props_map:
+                    properties[manifest_to_ct_props_map[key]] = value
+
+                response['properties'] = properties
                 logging.debug('Asset list accuracy check passed - received 1 asset with expect packageUrlNoVersion.')
           else:
               response['succeeded'] = False
