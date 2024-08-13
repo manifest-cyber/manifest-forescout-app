@@ -72,6 +72,10 @@ if manifest_api_token and check_consent(params):
 							if key in manifest_to_ct_props_map:
 								properties[manifest_to_ct_props_map[key]] = value
 
+          # Values to add
+					logging.debug('Set the following properties:')
+					for key, value in params.items():
+						logging.debug(f'Key: {key}, Value: {value}')
 					response["properties"] = properties
 				else:
 					response["error"] = fetch_assets_list_response.reason
