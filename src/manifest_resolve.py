@@ -1,34 +1,6 @@
-'''
-Copyright © 2020 Forescout Technologies, Inc.
+from connectproxyserver import ConnectProxyServer, ProxyProtocol
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-'''
-
-import logging
-import base64
-import jwt
-import hashlib
-import time
-import json
-import ssl
-import urllib.request
-
+# Given the params dict, determine if the user has consented to the terms and agreements during setup
 def check_consent(params):
     if not params.get('connect_manifest_consent_agreements', False):
         logging.info('You must consent to abide by all applicable terms and agreements between your organization and Manifest Cyber. Please reinstall the integration and agree to the terms.')
@@ -36,118 +8,81 @@ def check_consent(params):
     logging.debug('You agreed to abide by all applicable terms and agreements between your organization and Manifest Cyber. Test continuing...')
     return True
 
-def perform_request(url, headers, ssl_context, method='GET'):
-    request = urllib.request.Request(url, method=method, headers=headers)
-    try:
-        response = urllib.request.urlopen(request, context=ssl_context)
-        # Check the content type of the response
-        content_type = response.headers.get('Content-Type', '')
-        content = response.read()
-
-        if 'application/json' in content_type:
-            if content:  # Check if the response body is not empty
-                return json.loads(content)
-            else:
-                return {"error": "Empty response", "status": response.status}
-        elif 'text/plain' in content_type:
-            return content.decode('utf-8')  # Decode bytes to string if plain text
-        else:
-            logging.warning(f'Unexpected content type: {content_type}')
-            return {"error": "Unexpected content type", "status": response.status, "content": content.decode('utf-8')}
-
-    except urllib.error.HTTPError as e:
-        content = e.read().decode()
-        return {"error": content or "Unknown error", "status": e.code}
-    except urllib.error.URLError as e:
-        raise Exception(f"URL Error: {e.reason}")
-
-
+# Mapping between SampleApp API response fields to CounterACT properties
 manifest_to_ct_props_map = {
   "assetId": "connect_manifest_assetid",
   "sbomId": "connect_manifest_sbomid",
-  "relationship": "connect_manifest_sbom_relationship",
+  "relationshipToOrg": "connect_manifest_sbom_relationship",
   "coordinates": "connect_manifest_coordinates",
+  "riskScoreNum": "connect_manifest_riskscore",
 }
 
-response = {}
-properties = {}
-
-logging.info("Got the following params:")
-for key, value in params.items():
-  logging.info(f"{key}: {value}")
-
+# CONFIGURATION
+# All server configuration fields will be available in the 'params' dictionary.
 manifest_base_url = params.get('connect_manifest_url')
 manifest_api_token = params.get('connect_manifest_apitoken')
 
-ssl_context = ssl.create_default_context()
-headers = {'Authorization': f'Bearer {manifest_api_token}'}
+response = {}
+logging.debug("Manifest resolve started...")
 
-if not check_consent(params):
-  response['succeeded'] = False
-  response['result_msg'] = 'Consent not provided.'
-  logging.info('Consent to Manifest terms & agreements not provided.')
-
-# We know this likely won't work yet, the "firmware" requirement is a placeholder
-# We need the "Cloud Data Exchange Firmware", "Cloud Data Exchange Model", and "Cloud Data Exchange Vendor" from FS Cloud Data Exchange module - but we don't yet know what keys to look for.
-required_params = ["rem_firmware", "rem_model", "rem_vendor"]
-if all(key in params and params[key] for key in required_params):
-  firmware = params.get('rem_firmware').lower()
-  model = params.get('rem_model').lower()
-  vendor = params.get('rem_vendor').lower()
-
-  # Assemble our query string
-  assets_list_query_string = urllib.parse.quote(
-      '?limit=10&filters=[{ "field": "assetName", "value": "' +  model + '@' + firmware + '" }, { "field": "assetActive", "value": "true" }]',
+if manifest_api_token and check_consent(params):
+	# Set headers for requests
+	device_headers = {"Content-Type": "application/json; charset=utf-8", "Authorization": "Bearer " + str(manifest_api_token)}
+	# For properties and actions defined in the 'property.conf' file, CounterACT properties can be added as dependencies.
+	# These values will be found in the params dictionary if CounterACT was able to resolve the properties.
+	# If not, they will not be found in the params dictionary.
+	required_params = ["rem_firmware", "rem_model", "rem_vendor"]
+	if all(key in params and params[key] and params[key] != 'Unknown' for key in required_params):
+		givenVendor = params.get("rem_vendor")
+		givenModel = params.get("rem_model")
+		givenFirmware = params.get("rem_firmware")
+		
+		logging.debug(f'vendor is "{givenVendor}", firmware is "{givenFirmware}", model is "{givenModel}"')
+		
+    # Assemble asset list fetch URL
+		fetch_assets_url = manifest_base_url + "/v1/assets/" + urllib.parse.quote(
+      '?limit=10&filters=[{ "field": "assetName", "value": "' +  givenModel + '@' + givenFirmware + '" }, { "field": "assetActive", "value": "true" }]',
       safe='?&='
-  )
+    )
+		
+		logging.debug(f"asset fetch url is: {fetch_assets_url}")
 
-  try:
-      asset_list_check = perform_request(manifest_base_url + '/v1/assets' + assets_list_query_string, headers, ssl_context)
-      logging.debug('Asset list returned successfully (still need to check result accuracy).')
-  except Exception as e:
-      # Ran into an error (likely expired token, etc) while attempting to fetch assets.
-      # Note to user.
-      response['succeeded'] = False
-      response_message = f'Manifest: Unexpected error while attempting to fetch assets! Error: {e}'
-      response['result_msg'] = response_message
-      logging.debug(response_message)
-  else:
-      if asset_list_check['success'] and asset_list_check['queryInfo']['totalReturn'] == 1:
-          package_url_no_version = 'pkg:cpe/' + vendor + '/' + model
-          # if asset_list_check['data'][0]['packageUrlNoVersion'] != package_url_no_version:
-          #   # We got a single result, but the packageUrlNoVersion doesn't match what we expected
-          #   # For now, we consider this an error. Note to user.
-          #   response['succeeded'] = False
-          #   response_message = f'Manifest: Properties retrieved for entity {vendor}/{model}@{firmware}, but got a potentially mismatched response with: {asset_list_check["data"][0]}'
-          #   response['result_msg'] = response_message
-          #   logging.debug(response_message)
-          # else:
-          logging.debug('Received single asset from Manifest, continuing to assign data to CT properties')
-          return_values = asset_list_check["data"][0]
-          
-          for key, value in return_values.items():
-            if key in manifest_to_ct_props_map:
-              properties[manifest_to_ct_props_map[key]] = value
+		try:
+			# Create proxy server
+			proxy_server = ConnectProxyServer(params)
+			# Pass to use what HTTPS or HTTP or both in the protocol, pass down the ssl_verify
+			with proxy_server.get_requests_session(ProxyProtocol.all, headers=device_headers, verify=ssl_verify) as session:
+				# Make any requests we need to make
+				# Fetch assets list
+				fetch_assets_list_response = session.get(fetch_assets_url, proxies=proxy_server.proxies)
+				logging.debug(f"Fetch assets list response code: {fetch_assets_list_response.status_code}")
+				if 200 == fetch_assets_list_response.status_code:
+					logging.debug(f"Fetch assets list response text: {fetch_assets_list_response.text}")
+					request_response = json.loads(fetch_assets_list_response.text)
+					"""			
+					# All responses from scripts must contain the JSON object 'response'. Host property resolve scripts will 
+					need to populate a 'properties' JSON object within the JSON object 'response'. The 'properties' object will 
+					be a key, value mapping between the CounterACT property name and the value of the property
+					"""
+					properties = {}
+					if request_response and request_response['success'] and request_response['queryInfo']['totalReturn'] == 1:
+						return_values = request_response['data'][0]
+						logging.debug(f"Resolve response text on 0 element: {request_response['data'][0]}")
+						for key, value in return_values.items():
+							if key in manifest_to_ct_props_map:
+								properties[manifest_to_ct_props_map[key]] = value
 
-          # Add properties and mark as succeeded
-          response["properties"] = properties
-          response['succeeded'] = True
-
-          keys_list = ', '.join(response["properties"].keys())
-          logging.debug(f'Setting properties for entity {vendor}/{model}@{firmware} with: {keys_list}')
-          # logging.debug(f'Manifest: Properties retrieved for entity {vendor}/{model}@{firmware}, got JSON response with: {asset_list_check["data"][0]["packageUrlNoVersion"]}')
-      else:
-        # We got either zero or multiple results, which isn't expected.
-        # For now, we consider this an error. Note to user.
-        response['succeeded'] = False
-        response_message = f'Manifest: Expected 1 asset to be returned, but got {asset_list_check["queryInfo"]["totalReturn"]}.'
-        response['result_msg'] = response_message
-        logging.debug(response_message)
-
+					response["properties"] = properties
+				else:
+					response["error"] = fetch_assets_list_response.reason
+		except Exception as e:
+			response["error"] = f"Could not resolve properties: {e}."
+	else:
+		keys_list = ', '.join(params.keys())
+		error_message = f'Manifest: Missing required parameter information. Make sure rem_firmware, rem_vendor, & rem_model are provided from the Cloud Data Exchange module. Params provided: {keys_list}'
+		logging.debug(error_message)
+		response["error"] = error_message
 else:
-  response['succeeded'] = False
-  # Short-term: Make sure the keys we need are provided from the Cloud Data Exchange module.
-  keys_list = ', '.join(params.keys())
-  response_message = f'Manifest: Missing required parameter information. Make sure rem_firmware, rem_vendor, & rem_model are provided from the Cloud Data Exchange module. Params provided: {keys_list}'
-  response['result_msg'] = response_message
-  logging.debug(response_message)
+	error_message = f'Manifest: Missing API token or user consent to Manifest terms & agreements not provided.'
+	logging.debug(error_message)
+	response["error"] = error_message
