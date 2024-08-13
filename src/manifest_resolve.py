@@ -32,7 +32,7 @@ if manifest_api_token and check_consent(params):
 	# These values will be found in the params dictionary if CounterACT was able to resolve the properties.
 	# If not, they will not be found in the params dictionary.
 	required_params = ["rem_firmware", "rem_model"]
-	if all(key in params and params[key] and params[key] != 'Unknown' for key in required_params):
+	if all(key in params and params[key] for key in required_params):
 		givenVendor = params.get("rem_vendor")
 		givenModel = params.get("rem_model")
 		givenFirmware = params.get("rem_firmware")
@@ -81,6 +81,8 @@ if manifest_api_token and check_consent(params):
 		keys_list = ', '.join(params.keys())
 		error_message = f'Manifest: Missing required parameter information. Make sure rem_firmware & rem_model are provided from the Cloud Data Exchange module (rem_vendor also recommended). Params provided: {keys_list}'
 		logging.debug(error_message)
+		for key, value in params.items():
+			logging.debug(f'Key: {key}, Value: {value}')
 		response["error"] = error_message
 else:
 	error_message = f'Manifest: Missing API token or user consent to Manifest terms & agreements not provided.'
