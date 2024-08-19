@@ -16,7 +16,7 @@ This is a WIP under active development and not yet intended for production use. 
 9. After clicking Apply, you shoud see the config/logging window open, and then be good to go. *Note: You may need to click 'Apply' in this window before you can run the 'Test' in #6 above.*
 10. You should now be able to create policies and rules in Forescout to leverage Manifest data.
 11. If you need to update the app, you'll need to remove the existing app and re-import the new version (repeat steps 3-10).
-
+ 
 
 ## Local Testing
 - Run `python manifest_test_local.py --url https://api.manifestcyber.com --token <API_KEY> --agree -v` to test the connection to the Manifest API. You can instead run with `--help` to see all available options.
