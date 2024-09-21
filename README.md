@@ -5,7 +5,7 @@ This is a WIP under active development and not yet intended for production use. 
 
 
 ## Installation in Forescout
-1. Download the `manifest-forescout.zip` file (TODO: auto-generate in releases).
+1. Download the `manifest-forescout.zip` file from this repo.
 2. Open Forescout Console > Options. Search for 'Connect' and go to the 'App' tab.
 3. Click 'Import' and select the `manifest-forescout.zip` file. Note you'll need to make sure signature verification is disabled in the Connect options.
 4. You should now see installation logs and (hopefully) noting that all scripts validated successfully and system config was successfully reloaded. Click 'Close' in the log window and a 'System Description' window with an 'Add' button in the top right.
@@ -16,6 +16,36 @@ This is a WIP under active development and not yet intended for production use. 
 9. After clicking Apply, you shoud see the config/logging window open, and then be good to go. *Note: You may need to click 'Apply' in this window before you can run the 'Test' in #6 above.*
 10. You should now be able to create policies and rules in Forescout to leverage Manifest data.
 11. If you need to update the app, you'll need to remove the existing app and re-import the new version (repeat steps 3-10).
+
+
+## Usage Prereqs:
+The Manifest integration app looks for 3 properties on the device. These are:
+  - `mfst_vendor`: The vendor of the device firmware.
+  - `mfst_model`: The model of the device (or its firmware, as applicable).
+  - `mfst_firmware`: The firmware version of the device.
+
+
+## Usage
+- The app will automatically fetch SBOM and vulnerability data for devices in the Forescout network. This data will be available in the Forescout console for use in policies and rules.
+- Create a mapping between any collected firmware (for example, from Cloud Data Exchange) and the device's `mfst_vendor`, `mfst_model`, and `mfst_firmware` properties. This will allow the app to fetch the correct SBOM and vulnerability data for the device.
+- The integration expects that the appropriate SBOMs are available in the Manifest tenant. If the SBOMs are not available, the app will not be able to fetch the SBOM and vulnerability data for the device.
+
+
+## Manifest Properties
+The integration app will attempt to attach the following properties in Forescout for each device (when available):
+- `Manifest Asset ID`: The ID of the asset in Manifest.
+- `Manifest SBOM ID`: The ID of the SBOM in Manifest.
+- `Manifest SBOM Upload Date`: The date the SBOM was uploaded and the asset was created in Manifest.
+- `Manifest SBOM Download URL`: A URL to download the SBOM from Manifest.
+- `Manifest SBOM Relationship`: Indicates whether the SBOM is a first- or third-party (external) entity.
+- `Manifest Coordinates`: Derived coordinates (based on CPE and PURLs) for the asset in Manifest.
+- `Manifest Risk Score`: A numerical value representing the risk score of the asset in the Manifest platform. 3 is high risk, 2 is medium risk, and 1 is low risk.
+- `Total Vulnerabilities Count`: Total number of vulnerabilities found by Manifest in the SBOM for this asset.
+- `Critical Vulnerabilities Count`: Critical number of vulnerabilities found by Manifest in the SBOM for this asset.
+- `High Vulnerabilities Count`: High number of vulnerabilities found by Manifest in the SBOM for this asset.
+- `Medium Vulnerabilities Count`: Medium number of vulnerabilities found by Manifest in the SBOM for this asset.
+- `Low Vulnerabilities Count`: Low number of vulnerabilities found by Manifest in the SBOM for this asset.
+- `KEV Vulnerabilities Count`: Number of KEV (Known Exploitable Vulnerabilities) found by Manifest in the SBOM for this asset.
  
 
 ## Local Testing
