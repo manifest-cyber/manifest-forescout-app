@@ -16,7 +16,13 @@ manifest_to_ct_props_map = {
   "relationshipToOrg": "connect_manifest_sbom_relationship",
   "coordinates": "connect_manifest_coordinates",
   "riskScore": "connect_manifest_riskscore",
-  "vulnerabilities": "connect_manifest_vulnerabilities",
+  "countTotal": "connect_manifest_countVulnsTotal",
+  "countCritical": "connect_manifest_countVulnsCritical",
+  "countHigh": "connect_manifest_countVulnsHigh",
+  "countMedium": "connect_manifest_countVulnsMedium",
+  "countLow": "connect_manifest_countVulnsLow",
+  "countKev": "connect_manifest_countVulnsKev",
+  "sbomUrl": "connect_manifest_sbomDownloadUrl",
 }
 
 manifest_to_ct_vuln_entry_props_map = {
@@ -107,6 +113,17 @@ if manifest_api_token and check_consent(params):
                 if key in manifest_to_ct_props_map:
                   if key == '_id': # Don't overwrite the assetId, point to sbomId
                     properties[manifest_to_ct_props_map['sbomId']] = value
+                  elif key == 'dateCreated': # Date asset was first created
+                    properties[manifest_to_ct_props_map['whenUploaded']] = value
+                  elif key == 'sbomId': # Generate SBOM URL
+                    properties[manifest_to_ct_props_map['sbomUrl']] = manifest_base_url + '/v1/sbom/download/' + value + '?redirect=1&originalSbom=true'
+                  elif key == 'countVulnerabilities': # Iterate over vuln counts
+                    properties[manifest_to_ct_props_map['countTotal']] = value.get('total', 0)
+                    properties[manifest_to_ct_props_map['countCritical']] = value.get('critical', 0)
+                    properties[manifest_to_ct_props_map['countHigh']] = value.get('high', 0)
+                    properties[manifest_to_ct_props_map['countMedium']] = value.get('medium', 0)
+                    properties[manifest_to_ct_props_map['countLow']] = value.get('low', 0)
+                    properties[manifest_to_ct_props_map['countKev']] = value.get('isKev', 0)
                   else:
                     properties[manifest_to_ct_props_map[key]] = value
             else:
