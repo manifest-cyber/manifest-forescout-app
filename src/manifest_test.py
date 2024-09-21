@@ -94,7 +94,7 @@ def test_manifest(params):
       model = 'm2025-le_firmware'
       vendor = 'axis'
       assets_list_query_string = urllib.parse.quote(
-          '?limit=10&filters=[{ "field": "assetName", "value": "' +  model + '@' + firmware + '" }, { "field": "assetActive", "value": "true" }]',
+          '?limit=10&filters=[{ "field": "assetName", "value": ["'+ model + '", "'+ firmware + '"] }, { "field": "assetActive", "value": "true" }]',
           safe='?&='
       )
       

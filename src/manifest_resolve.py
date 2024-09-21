@@ -47,11 +47,11 @@ if manifest_api_token and check_consent(params):
   # For properties and actions defined in the 'property.conf' file, CounterACT properties can be added as dependencies.
   # These values will be found in the params dictionary if CounterACT was able to resolve the properties.
   # If not, they will not be found in the params dictionary.
-  required_params = ["rem_firmware", "rem_model"]
+  required_params = ["mfst_firmware", "mfst_model"]
   if all(key in params and params[key] and params[key] != 'Unknown' for key in required_params):
-    givenVendor = params.get("rem_vendor")
-    givenModel = params.get("rem_model")
-    givenFirmware = params.get("rem_firmware")
+    givenVendor = params.get("mfst_vendor")
+    givenModel = params.get("mfst_model")
+    givenFirmware = params.get("mfst_firmware")
     
     # Assemble a partial pURL string we'll use for comparisons later
     assetPartialPurl = givenModel + '@' + givenFirmware
@@ -64,7 +64,7 @@ if manifest_api_token and check_consent(params):
     
   # Assemble asset list fetch URL
     fetch_assets_url = manifest_base_url + "/v1/assets/" + urllib.parse.quote(
-    '?limit=10&filters=[{ "field": "assetName", "value": "' +  givenModel + '@' + givenFirmware + '" }, { "field": "assetActive", "value": "true" }]',
+    '?limit=10&filters=[{ "field": "assetName", "value": ["'+ givenModel + '", "'+ givenFirmware + '"] }, { "field": "assetActive", "value": "true" }]',
     safe='?&='
   )
     
@@ -109,6 +109,8 @@ if manifest_api_token and check_consent(params):
                     properties[manifest_to_ct_props_map['sbomId']] = value
                   else:
                     properties[manifest_to_ct_props_map[key]] = value
+            else:
+              logging.debug(f"Unable to resolve response vulns: {fetch_single_asset_response}")
 
             # Fetch up to 1000 vulnerabilities for this asset. For each one, iterate and add to the `vulnerabilities` composite property 
             fetch_asset_vulns = session.get(manifest_base_url + '/v1/vulnerabilities/organization' + urllib.parse.quote(
@@ -133,6 +135,8 @@ if manifest_api_token and check_consent(params):
               properties[manifest_to_ct_props_map['vulnerabilities']] = vulns_iterated
 
               logging.debug(f"Resolve response vulns: {properties[manifest_to_ct_props_map['vulnerabilities']]}")
+            else:
+              logging.debug(f"Unable to resolve response vulns: {fetch_asset_vulns}")
           response["properties"] = properties
         else:
           response["error"] = fetch_assets_list_response.reason
@@ -140,7 +144,7 @@ if manifest_api_token and check_consent(params):
       response["error"] = f"Could not resolve properties: {e}."
   else:
     keys_list = ', '.join(params.keys())
-    error_message = f'Manifest: Missing required parameter information. Make sure rem_firmware & rem_model are provided from the Cloud Data Exchange module (rem_vendor also recommended). Params provided: {keys_list}'
+    error_message = f'Manifest: Missing required parameter information. Make sure mfst_firmware & mfst_model are provided from the Cloud Data Exchange module (mfst_vendor also recommended). Params provided: {keys_list}'
     logging.debug(error_message)
     for key, value in params.items():
       logging.debug(f'Key: {key}, Value: {value}')

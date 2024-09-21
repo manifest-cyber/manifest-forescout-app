@@ -108,7 +108,7 @@ def test_manifest(params):
     model = 'm2025-le_firmware'
     vendor = 'axis'
     assets_list_query_string = urllib.parse.quote(
-        '?limit=10&filters=[{ "field": "assetName", "value": "' +  model + '@' + firmware + '" }, { "field": "assetActive", "value": "true" }]',
+        '?limit=10&filters=[{ "field": "assetName", "value": ["'+ model + '", "'+ firmware + '"] }, { "field": "assetActive", "value": "true" }]',
         safe='?&='
     )
     
@@ -184,7 +184,7 @@ def test_manifest(params):
             properties[manifest_to_ct_props_map['vulnerabilities']] = vulns_iterated
             logging.debug(f"Resolve response vulns: {properties[manifest_to_ct_props_map['vulnerabilities']]}")
           else:
-            logging.debug(f"Resolve response vulns: {return_values}")
+            logging.debug(f"Resolve response vulns: {fetch_asset_vulns}")
 
           response['properties'] = properties
       else:
