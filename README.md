@@ -1,9 +1,6 @@
 # Manifest-Forescout-App 1.0.0
 eyeExtend Connect App for Manifest allows Forescout to connect to the Manifest API and retrive SBOM and vulnerability data for devices in the Forescout network.
 
-This is a WIP under active development and not yet intended for production use. Current app ony attempts to connect to Manifest API and fetch initial dataset.
-
-
 ## Installation in Forescout
 1. Download the `manifest-forescout.zip` file from this repo.
 2. Open Forescout Console > Options. Search for 'Connect' and go to the 'App' tab.
