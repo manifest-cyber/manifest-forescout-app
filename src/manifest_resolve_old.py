@@ -97,7 +97,7 @@ if all(key in params and params[key] and params[key] != 'Unknown' for key in req
 
   # Assemble our query string
   assets_list_query_string = urllib.parse.quote(
-      '?limit=10&filters=[{ "field": "assetName", "value": "' +  model + '@' + firmware + '" }, { "field": "assetActive", "value": "true" }]',
+      '?limit=10&filters=[{ "field": "textSearch", "value": "' +  model + '@' + firmware + '" }, { "field": "assetActive", "value": "true" }]',
       safe='?&='
   )
 

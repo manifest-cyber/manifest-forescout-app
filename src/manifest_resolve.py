@@ -70,7 +70,7 @@ if manifest_api_token and check_consent(params):
     
   # Assemble asset list fetch URL
     fetch_assets_url = manifest_base_url + "/v1/assets/" + urllib.parse.quote(
-    '?limit=10&filters=[{ "field": "assetName", "value": ["'+ givenModel + '", "'+ givenFirmware + '"] }, { "field": "assetActive", "value": "true" }]',
+    '?limit=10&filters=[{ "field": "textSearch", "value": ["'+ givenModel + '", "'+ givenFirmware + '"] }, { "field": "assetActive", "value": "true" }]',
     safe='?&='
   )
     
