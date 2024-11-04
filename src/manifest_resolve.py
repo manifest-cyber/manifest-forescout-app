@@ -88,11 +88,11 @@ if manifest_api_token and check_consent(params):
         if 200 == fetch_assets_list_response.status_code:
           logging.debug(f"Fetch assets list response text: {fetch_assets_list_response.text}")
           request_response = json.loads(fetch_assets_list_response.text)
-          """			
+	
           # All responses from scripts must contain the JSON object 'response'. Host property resolve scripts will 
-          need to populate a 'properties' JSON object within the JSON object 'response'. The 'properties' object will 
-          be a key, value mapping between the CounterACT property name and the value of the property
-          """
+          # need to populate a 'properties' JSON object within the JSON object 'response'. The 'properties' object will 
+          # be a key, value mapping between the CounterACT property name and the value of the property
+
           properties = {}
           if request_response and request_response['success'] and request_response['queryInfo']['totalReturn'] == 1:
             return_values = request_response['data'][0]
@@ -116,7 +116,7 @@ if manifest_api_token and check_consent(params):
                   elif key == 'dateCreated': # Date asset was first created
                     properties[manifest_to_ct_props_map['whenUploaded']] = value
                   elif key == 'sbomId': # Generate SBOM URL
-                    properties[manifest_to_ct_props_map['sbomUrl']] = manifest_base_url + '/v1/sbom/download/' + value + '?redirect=1&originalSbom=true'
+                    properties[manifest_to_ct_props_map['sbomUrl']] = manifest_base_url + '/v1/sbom/download/' + value + '?redirect=1'
                   elif key == 'countVulnerabilities': # Iterate over vuln counts
                     properties[manifest_to_ct_props_map['countTotal']] = value.get('total', 0)
                     properties[manifest_to_ct_props_map['countCritical']] = value.get('critical', 0)
@@ -128,32 +128,6 @@ if manifest_api_token and check_consent(params):
                     properties[manifest_to_ct_props_map[key]] = value
             else:
               logging.debug(f"Unable to resolve response vulns: {fetch_single_asset_response}")
-
-            # Fetch up to 1000 vulnerabilities for this asset. For each one, iterate and add to the `vulnerabilities` composite property 
-            fetch_asset_vulns = session.get(manifest_base_url + '/v1/vulnerabilities/organization' + urllib.parse.quote(
-                '?limit=1000&confineToAsset=' + properties["connect_manifest_assetid"] + '&filters=[{ "field": "assetActive", "value": "true" }]',
-                safe='?&='
-            ), proxies=proxy_server.proxies)
-
-            # Check if the fetch_asset_vulns is successful
-            if fetch_asset_vulns and fetch_asset_vulns['success']:
-              return_values = fetch_asset_vulns['data']
-              logging.debug(f"Resolve response vulns: {return_values}")
-
-              # `vulnerabilities` is a composite property, so we need to iterate over the vulns and handle their mapping to CounterACT properties individually
-              # todo: make this way cleaner
-              vulns_iterated = []
-              for vuln in return_values:
-                vuln_entry = {}
-                for key, value in vuln.items():
-                  if key in manifest_to_ct_vuln_entry_props_map:
-                    vuln_entry[manifest_to_ct_vuln_entry_props_map[key]] = value
-                vulns_iterated.append(vuln_entry)
-              properties[manifest_to_ct_props_map['vulnerabilities']] = vulns_iterated
-
-              logging.debug(f"Resolve response vulns: {properties[manifest_to_ct_props_map['vulnerabilities']]}")
-            else:
-              logging.debug(f"Unable to resolve response vulns: {fetch_asset_vulns}")
           response["properties"] = properties
         else:
           response["error"] = fetch_assets_list_response.reason
