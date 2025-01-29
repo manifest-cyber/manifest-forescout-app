@@ -5,10 +5,10 @@
   "metadata": {
     "component": {
       "type": "firmware",
-      "name": "1756-EN2T/D",
-      "version": "10.006",
-      "cpe": "cpe:2.3:o:rockwell:1756-en2t:10.006:*:*:*:*:*:*:*:*",
-      "purl": "pkg:cpe/rockwell/1756-en2t@10.006"
+      "name": "NPM6",
+      "version": "3.6.406.5",
+      "cpe": "cpe:2.3:o:tridium:npm6:3.6.406.5:*:*:*:*:*:*:*:*",
+      "purl": "pkg:cpe/tridium/npm6@3.6.406.5"
     }
   },
   "components": [

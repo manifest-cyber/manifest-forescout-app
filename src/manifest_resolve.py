@@ -24,6 +24,8 @@ manifest_to_ct_props_map = {
   "countMedium": "connect_manifest_countvulnsmedium",
   "countLow": "connect_manifest_countvulnslow",
   "countKev": "connect_manifest_countvulnskev",
+  "countVulnerabilities": "--", # This is a placeholder for the nested vuln counts
+  "dateCreated": "--", # This is a placeholder for whenUploaded
 }
 
 # CONFIGURATION
@@ -133,9 +135,6 @@ if manifest_api_token and check_consent(params):
   else:
     keys_list = ', '.join(params.keys())
     error_message = f'Manifest: Missing required parameter information. Make sure model_classification & firmware_classification properties are available for this device. Params provided: {keys_list}'
-    logging.debug(error_message)
-    for key, value in params.items():
-      logging.debug(f'Key: {key}, Value: {value}')
     response["error"] = error_message
 else:
   error_message = f'Manifest: Missing API token or user consent to Manifest terms & agreements not provided.'
