@@ -53,11 +53,15 @@ if manifest_api_token and check_consent(params):
   # For properties and actions defined in the 'property.conf' file, CounterACT properties can be added as dependencies.
   # These values will be found in the params dictionary if CounterACT was able to resolve the properties.
   # If not, they will not be found in the params dictionary.
-  required_params = ["mfst_firmware", "mfst_model"]
+  # vendor is intentionally not required.
+  required_params = ['firmware_classification', 'model_classification']
   if all(key in params and params[key] and params[key] != 'Unknown' for key in required_params):
-    givenVendor = params.get("mfst_vendor")
-    givenModel = params.get("mfst_model")
-    givenFirmware = params.get("mfst_firmware")
+    givenVendor = params.get("vendor_classification")
+    # givenVendor = 'Unknown'
+    givenModel = params.get("model_classification")
+    # givenModel = '7.20.1'
+    givenFirmware = params.get("firmware_classification")
+    # givenFirmware = 'm2025le_firmware'
     
     # Assemble a partial pURL string we'll use for comparisons later
     assetPartialPurl = givenModel + '@' + givenFirmware
