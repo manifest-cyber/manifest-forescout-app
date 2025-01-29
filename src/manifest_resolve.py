@@ -53,8 +53,8 @@ if manifest_api_token and check_consent(params):
   # For properties and actions defined in the 'property.conf' file, CounterACT properties can be added as dependencies.
   # These values will be found in the params dictionary if CounterACT was able to resolve the properties.
   # If not, they will not be found in the params dictionary.
-  # vendor is intentionally not required.
-  required_params = ['firmware_classification', 'model_classification']
+  # vendor, firmware is intentionally not required.
+  required_params = ['model_classification']
   if all(key in params and params[key] and params[key] != 'Unknown' for key in required_params):
     givenVendor = params.get("vendor_classification")
     # givenVendor = 'Unknown'
