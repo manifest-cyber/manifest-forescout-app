@@ -6,7 +6,7 @@
     "component": {
       "type": "firmware",
       "name": "1756-EN2T/D",
-      "version": "7.20.1",
+      "version": "10.006",
       "cpe": "cpe:2.3:o:axis:m2025-le_firmware:7.20.1:*:*:*:*:*:*:*:*",
       "purl": "pkg:cpe/axis/m2025-le_firmware@7.20.1"
     }
