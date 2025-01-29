@@ -18,12 +18,12 @@ manifest_to_ct_props_map = {
   "relationshipToOrg": "connect_manifest_sbom_relationship",
   "coordinates": "connect_manifest_coordinates",
   "riskScore": "connect_manifest_riskscore",
-  "countTotal": "connect_manifest_countVulnsTotal",
-  "countCritical": "connect_manifest_countVulnsCritical",
-  "countHigh": "connect_manifest_countVulnsHigh",
-  "countMedium": "connect_manifest_countVulnsMedium",
-  "countLow": "connect_manifest_countVulnsLow",
-  "countKev": "connect_manifest_countVulnsKev",
+  "countTotal": "connect_manifest_countvulnstotal",
+  "countCritical": "connect_manifest_countvulnscritical",
+  "countHigh": "connect_manifest_countvulnshigh",
+  "countMedium": "connect_manifest_countvulnsmedium",
+  "countLow": "connect_manifest_countvulnslow",
+  "countKev": "connect_manifest_countvulnskev",
 }
 
 # CONFIGURATION
@@ -95,6 +95,8 @@ if manifest_api_token and check_consent(params):
                 elif key == 'dateCreated': # Date asset was first created
                     properties[manifest_to_ct_props_map['whenUploaded']] = value
                 elif key == 'countVulnerabilities': # Iterate over vuln counts
+                    logging.debug(f"Found total vulns for this asset: {value.get('total', 0)}")
+
                     properties[manifest_to_ct_props_map['countTotal']] = value.get('total', 0)
                     properties[manifest_to_ct_props_map['countCritical']] = value.get('critical', 0)
                     properties[manifest_to_ct_props_map['countHigh']] = value.get('high', 0)
