@@ -95,14 +95,28 @@ if manifest_api_token and check_consent(params):
                 elif key == 'dateCreated': # Date asset was first created
                     properties[manifest_to_ct_props_map['whenUploaded']] = value
                 elif key == 'countVulnerabilities': # Iterate over vuln counts
-                    logging.debug(f"Found total vulns for this asset: {value.get('total', 0)}")
+                    logging.debug(f"Iterating over countVulnerabilities")
 
-                    properties[manifest_to_ct_props_map['countTotal']] = value.get('total', 0)
-                    properties[manifest_to_ct_props_map['countCritical']] = value.get('critical', 0)
-                    properties[manifest_to_ct_props_map['countHigh']] = value.get('high', 0)
-                    properties[manifest_to_ct_props_map['countMedium']] = value.get('medium', 0)
-                    properties[manifest_to_ct_props_map['countLow']] = value.get('low', 0)
-                    properties[manifest_to_ct_props_map['countKev']] = value.get('isKev', 0)
+                    vulnCounts = value
+                    for key in vulnCounts:
+                      if key == 'total':
+                        logging.debug(f"Setting MFST property with key: {key}, to value: {vulnCounts[key]}")
+                        properties[manifest_to_ct_props_map['countTotal']] = vulnCounts[key]
+                      elif key == 'critical':
+                        logging.debug(f"Setting MFST property with key: {key}, to value: {vulnCounts[key]}")
+                        properties[manifest_to_ct_props_map['countCritical']] = vulnCounts[key]
+                      elif key == 'high':
+                        logging.debug(f"Setting MFST property with key: {key}, to value: {vulnCounts[key]}")
+                        properties[manifest_to_ct_props_map['countHigh']] = vulnCounts[key]
+                      elif key == 'medium':
+                        logging.debug(f"Setting MFST property with key: {key}, to value: {vulnCounts[key]}")
+                        properties[manifest_to_ct_props_map['countMedium']] = vulnCounts[key]
+                      elif key == 'low':
+                        logging.debug(f"Setting MFST property with key: {key}, to value: {vulnCounts[key]}")
+                        properties[manifest_to_ct_props_map['countLow']] = vulnCounts[key]
+                      elif key == 'kev':
+                        logging.debug(f"Setting MFST property with key: {key}, to value: {vulnCounts[key]}")
+                        properties[manifest_to_ct_props_map['countKev']] = vulnCounts[key]
                 else:
                   logging.debug(f"Setting MFST property with key: {key}, to value: {value}")
                   properties[manifest_to_ct_props_map[key]] = value
@@ -118,7 +132,7 @@ if manifest_api_token and check_consent(params):
       response["error"] = f"Could not resolve properties: {e}."
   else:
     keys_list = ', '.join(params.keys())
-    error_message = f'Manifest: Missing required parameter information. Make sure mfst_firmware & mfst_model are provided from the Cloud Data Exchange module (mfst_vendor also recommended). Params provided: {keys_list}'
+    error_message = f'Manifest: Missing required parameter information. Make sure model_classification & firmware_classification properties are available for this device. Params provided: {keys_list}'
     logging.debug(error_message)
     for key, value in params.items():
       logging.debug(f'Key: {key}, Value: {value}')
