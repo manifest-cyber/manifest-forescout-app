@@ -11,7 +11,9 @@ def check_consent(params):
 # Mapping between SampleApp API response fields to CounterACT properties
 manifest_to_ct_props_map = {
   "_id": "connect_manifest_assetid",
+  "assetUrl": "connect_manifest_manifesturl",
   "sbomId": "connect_manifest_sbomid",
+  "sbomUrl": "connect_manifest_sbomurl",
   "whenUploaded": "connect_manifest_sbomuploaddate",
   "relationshipToOrg": "connect_manifest_sbom_relationship",
   "coordinates": "connect_manifest_coordinates",
@@ -22,21 +24,6 @@ manifest_to_ct_props_map = {
   "countMedium": "connect_manifest_countVulnsMedium",
   "countLow": "connect_manifest_countVulnsLow",
   "countKev": "connect_manifest_countVulnsKev",
-  "sbomUrl": "connect_manifest_sbomDownloadUrl",
-}
-
-manifest_to_ct_vuln_entry_props_map = {
-  "cveId": "connect_manifest_vulnerability_id",
-  "cvss2BaseScore": "connect_manifest_vulnerability_cvss2_base_score",
-  "cvss2BaseSeverity": "connect_manifest_vulnerability_cvss2_base_severity",
-  "cvss3BaseScore": "connect_manifest_vulnerability_cvss3_base_score",
-  "cvss3BaseSeverity": "connect_manifest_vulnerability_cvss3_base_severity",
-  "epssPercentile": "connect_manifest_vulnerability_id_epss_percentile",
-  "epssScore": "connect_manifest_vulnerability_id_epss_score",
-  "publishDate": "connect_manifest_vulnerability_id_publishate",
-  "recommendedAction": "connect_manifest_vulnerability_id_recommend",
-  "priorityScore": "connect_manifest_vulnerability_id_priority",
-  "impactedAssets": "connect_manifest_vulnerability_id_impacted_assets",
 }
 
 # CONFIGURATION
@@ -91,40 +78,37 @@ if manifest_api_token and check_consent(params):
           # be a key, value mapping between the CounterACT property name and the value of the property
 
           properties = {}
+          resolvedAssetId = ''
+
           if request_response and request_response['success'] and request_response['queryInfo']['totalReturn'] == 1:
             return_values = request_response['data'][0]
             logging.debug(f"Resolve response text on 0 element: {request_response['data'][0]}")
             for key, value in return_values.items():
               if key in manifest_to_ct_props_map:
-                properties[manifest_to_ct_props_map[key]] = value
-
-            # Fetch the single asset - which should include `latestSbom`, from which we'll get the sbomId and whenUploaded fields, and then construct a download URL
-            fetch_single_asset_response = session.get(manifest_base_url + "/v1/asset/" + properties["connect_manifest_assetid"], proxies=proxy_server.proxies)
-
-            # Check if the fetch_single_asset_response is successful
-            if fetch_single_asset_response and fetch_single_asset_response['success']:
-              return_values = fetch_single_asset_response['data'][0]
-              logging.debug(f"Resolve response latest sbom: {return_values['latestSbom']}")
-              for key, value in return_values['latestSbom'].items():
-                # We'll get the sbomId and whenUploaded from the latestSbom object
-                if key in manifest_to_ct_props_map:
-                  if key == '_id': # Don't overwrite the assetId, point to sbomId
-                    properties[manifest_to_ct_props_map['sbomId']] = value
-                  elif key == 'dateCreated': # Date asset was first created
+                if key == '_id': # Set our asset ID to use.
+                  resolvedAssetId = value
+                  properties[manifest_to_ct_props_map[key]] = value
+                  properties[manifest_to_ct_props_map['assetUrl']] = manifest_base_url + '/v1/asset/' + value + '?redirect=1'
+                elif key == 'sbomId':
+                  properties[manifest_to_ct_props_map['sbomId']] = value
+                  properties[manifest_to_ct_props_map['sbomUrl']] = manifest_base_url + '/v1/sbom/download/' + value + '?redirect=1'
+                elif key == 'dateCreated': # Date asset was first created
                     properties[manifest_to_ct_props_map['whenUploaded']] = value
-                  elif key == 'sbomId': # Generate SBOM URL
-                    properties[manifest_to_ct_props_map['sbomUrl']] = manifest_base_url + '/v1/sbom/download/' + value + '?redirect=1'
-                  elif key == 'countVulnerabilities': # Iterate over vuln counts
+                elif key == 'countVulnerabilities': # Iterate over vuln counts
                     properties[manifest_to_ct_props_map['countTotal']] = value.get('total', 0)
                     properties[manifest_to_ct_props_map['countCritical']] = value.get('critical', 0)
                     properties[manifest_to_ct_props_map['countHigh']] = value.get('high', 0)
                     properties[manifest_to_ct_props_map['countMedium']] = value.get('medium', 0)
                     properties[manifest_to_ct_props_map['countLow']] = value.get('low', 0)
                     properties[manifest_to_ct_props_map['countKev']] = value.get('isKev', 0)
-                  else:
-                    properties[manifest_to_ct_props_map[key]] = value
-            else:
-              logging.debug(f"Unable to resolve response vulns: {fetch_single_asset_response}")
+                else:
+                  logging.debug(f"Setting MFST property with key: {key}, to value: {value}")
+                  properties[manifest_to_ct_props_map[key]] = value
+            logging.debug(f"Finished looping over response values. Resolved asset ID: {resolvedAssetId}")
+          else:
+            logging.debug(f"Failed to resolve asset list: {request_response}")
+            response["error"] = "Failed to resolve asset list."
+          
           response["properties"] = properties
         else:
           response["error"] = fetch_assets_list_response.reason
