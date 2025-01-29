@@ -5,7 +5,7 @@ def check_consent(params):
   if not params.get('connect_manifest_consent_agreements', False):
     logging.info('You must consent to abide by all applicable terms and agreements between your organization and Manifest Cyber. Please reinstall the integration and agree to the terms.')
     return False
-  logging.debug('You agreed to abide by all applicable terms and agreements between your organization and Manifest Cyber. Test continuing...')
+  logging.debug('You agreed to abide by all applicable terms and agreements between your organization and Manifest Cyber. Continuing...')
   return True
 
 # Mapping between SampleApp API response fields to CounterACT properties
@@ -54,7 +54,7 @@ if manifest_api_token and check_consent(params):
   # These values will be found in the params dictionary if CounterACT was able to resolve the properties.
   # If not, they will not be found in the params dictionary.
   # vendor, firmware is intentionally not required.
-  required_params = ['model_classification']
+  required_params = ['model_classification', 'firmware_classification']
   if all(key in params and params[key] and params[key] != 'Unknown' for key in required_params):
     givenVendor = params.get("vendor_classification")
     # givenVendor = 'Unknown'
@@ -62,13 +62,6 @@ if manifest_api_token and check_consent(params):
     # givenModel = '7.20.1'
     givenFirmware = params.get("firmware_classification")
     # givenFirmware = 'm2025le_firmware'
-    
-    # Assemble a partial pURL string we'll use for comparisons later
-    assetPartialPurl = givenModel + '@' + givenFirmware
-  
-    # If vendor is present, prepend it to the assetPartialPurl
-    if givenVendor and givenVendor != 'Unknown':
-      assetPartialPurl = givenVendor + '/' + assetPartialPurl
     
     logging.debug(f'vendor is "{givenVendor}", firmware is "{givenFirmware}", model is "{givenModel}"')
     
