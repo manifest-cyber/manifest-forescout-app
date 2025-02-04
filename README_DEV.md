@@ -1,4 +1,4 @@
-# Manifest-Forescout-App 1.0.0
+# Manifest-Forescout-App 1.3.5
 eyeExtend Connect App for Manifest allows Forescout to connect to the Manifest API and retrive SBOM and vulnerability data for devices in the Forescout network. This README outlines the installation and usage of the app for developers wishing to extend or modify its functionality.
 
 ## Installation in Forescout
@@ -24,7 +24,7 @@ The Manifest integration app looks for 3 properties on the device. These are:
 
 ## Usage
 - The app will automatically fetch SBOM and vulnerability data for devices in the Forescout network. This data will be available in the Forescout console for use in policies and rules.
-- Create a mapping between any collected firmware (for example, from Cloud Data Exchange) and the device's `mfst_vendor`, `mfst_model`, and `mfst_firmware` properties. This will allow the app to fetch the correct SBOM and vulnerability data for the device.
+- Create a mapping between any collected firmware (for example, from Cloud Data Exchange) and the device's `vendor_classification`, `model_classification`, and `firmware_classification` properties. This will allow the app to fetch the correct SBOM and vulnerability data for the device.
 - The integration expects that the appropriate SBOMs are available in the Manifest tenant. If the SBOMs are not available, the app will not be able to fetch the SBOM and vulnerability data for the device.
 
 
